@@ -3,7 +3,7 @@ FROM ubuntu:16.04
 MAINTAINER Keoni Gandall "koeng101@gmail.com"
 
 # Update
-RUN apt-get update && apt-get install -y apt-transport-https python-pip python-dev curl
+RUN apt-get update && apt-get install -y apt-transport-https python-pip python-dev curl samtools
 
 # Install requirements
 COPY . /app
