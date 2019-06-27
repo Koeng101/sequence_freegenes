@@ -60,77 +60,11 @@ def schema_generator(properties,required,additionalProperties=False):
 #################
 ### FG import ###
 #################
-def get_total_bytes(s3, key):
-    result = s3.list_objects(Bucket=BUCKET)
-    for item in result['Contents']:
-        if item['Key'] == key:
-            return item['Size']
-
-def get_object(s3, total_bytes,key):
-    if total_bytes > 1000000:
-        return get_object_range(s3, total_bytes, key)
-    return s3.get_object(Bucket=BUCKET, Key=key)['Body'].read()
-
-def get_object_range(s3, total_bytes, key):
-    offset = 0
-    while total_bytes > 0:
-        end = offset + 999999 if total_bytes > 1000000 else ""
-        total_bytes -= 1000000
-        byte_range = 'bytes={offset}-{end}'.format(offset=offset, end=end)
-        offset = end + 1 if not isinstance(end, str) else None
-        yield s3.get_object(Bucket=BUCKET, Key=key, Range=byte_range)['Body'].read()
-
-class Files(db.Model):
-    def __init__(self,name,file,plate_type,order_uuid,status,plate_name,breadcrumb,plate_vendor_id):
-        print(name)
-        file_name = str(uuid.uuid4())
-        def upload_file_to_spaces(file,file_name=file_name,bucket_name=BUCKET,spaces=SPACES):
-            """
-            Docs: http://boto3.readthedocs.io/en/latest/guide/s3.html
-            http://zabana.me/notes/upload-files-amazon-s3-flask.html"""
-            try:
-                print('Attempting')
-                spaces.upload_fileobj(file,bucket_name,file_name)
-                print('Uploaded')
-            except Exception as e:
-                print("Failed: {}".format(e))
-                return False
-            return True
-        if upload_file_to_spaces(file,file_name=file_name) == True:
-            self.name = name
-            self.file_name = file_name
-            self.plate_type = plate_type
-            self.order_uuid = order_uuid
-            self.status = status
-            self.breadcrumb = breadcrumb
-            self.plate_name = plate_name
-            self.plate_vendor_id = plate_vendor_id
-            # Also include plate_name in json_file if uploading a glycerol stock or dna stock
-    __tablename__ = 'files'
-    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
-    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
-
-    name = db.Column(db.String, nullable=False) # Name to be displayed to user
-    file_name = db.Column(db.String, nullable=False) # Link to spaces
-
-    
-    def toJSON(self,full=None):
-        return {'uuid':self.uuid,'name':self.name,'file_name':self.file_name,'plate_type':self.plate_type,'order_uuid':self.order_uuid,'breadcrumb':self.breadcrumb,'plate_name':self.plate_name,'status':self.status,'plate_vendor_id':self.plate_vendor_id}
-    def download(self):
-        s3 = SPACES
-        key = self.file_name
-        total_bytes = get_total_bytes(s3,key)
-        return Response(
-            get_object(s3, total_bytes, key),
-            mimetype='text/plain',
-            headers={"Content-Disposition": "attachment;filename={}".format(self.name)})
 
 seqrun_schema = {
         "uuid": uuid_schema,
         "name": generic_string,
         "notes": generic_string,
-        "basecaller": generic_string,
-        "basecaller_version_number": generic_string,
         "machine_id": generic_string,
         "sequencing_type": {"type": "string", "enum": ["Nanopore","Illumina","PacBio"]},
         "machine": {"type": "string", "enum": ["MinION","iSeq"]},
@@ -150,8 +84,6 @@ class Seqrun(db.Model):
     name = db.Column(db.String) # run name
     notes = db.Column(db.String)
     run_id = db.Column(db.String) # Sequencing provider id
-    basecaller = db.Column(db.String)
-    basecaller_version_number = db.Column(db.String)
     machine_id = db.Column(db.String)
     sequencing_type = db.Column(db.String) # illumina, nanopore, etc
     machine = db.Column(db.String) # minion, iseq, etc
@@ -167,21 +99,17 @@ class Seqrun(db.Model):
             dictionary['fastqs'] = [fastq.uuid for fastq in self.fastqs]
         return dictionary
 
-pileup_fastq = db.Table('pileup_fastq',
-    db.Column('pileup_uuid', UUID(as_uuid=True), db.ForeignKey('pileups.uuid'), primary_key=True),
-    db.Column('fastq_uuid', UUID(as_uuid=True), db.ForeignKey('fastqs.uuid'),primary_key=True,nullable=True),
-)
-
 pileup_schema = {
         "uuid": uuid_schema,
         "status": {"type": "string", "enum": ["Mutated","Confirmed","Failed"]},
         "full_search_sequence": dna_string,
         "target_sequence": dna_string,
         "sample_uuid": uuid_schema,
-        "fastqs": {"type": "array", "items": [uuid_schema]},
-        "file_uuid": uuid_schema
+        "seqrun_uuid": uuid_schema,
+        "index_for": generic_string,
+        "index_rev": generic_String,
         }
-pileup_required = ['full_search_sequence','target_sequence','sample_uuid']
+pileup_required = ['full_search_sequence','target_sequence','sample_uuid','index_for','index_rev']
 class Pileup(db.Model):
     validator = schema_generator(pileup_schema,pileup_required)
     put_validator = schema_generator(pileup_schema,[])
@@ -194,12 +122,12 @@ class Pileup(db.Model):
     status = db.Column(db.String) # mutation,confirmed,etc
     full_search_sequence = db.Column(db.String)
     target_sequence = db.Column(db.String) 
+    index_for = db.Column(db.String)
+    index_rev = db.Column(db.String)
 
     sample_uuid = db.Column(db.String())
-    fastqs = db.relationship('Fastq', secondary=pileup_fastq, lazy='subquery',
-        backref=db.backref('pileups', lazy=True))
+    seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
 
-    file_uuid = db.Column(UUID, db.ForeignKey('files.uuid'),nullable=True)
     
     def toJSON(self,full=None):
         dictionary= {'uuid':self.uuid,'time_created':self.time_created,'time_updated':self.time_updated,'status':self.status,'full_search_sequence':self.full_search_sequence,'target_sequence':self.target_sequence,'file_uuid':self.file_uuid, 'sample_uuid': self.sample_uuid}
@@ -207,36 +135,78 @@ class Pileup(db.Model):
             dictionary['fastqs'] = [fastq.uuid for fastq in self.fastqs]
         return dictionary
 
-fastq_schema = {
-        "uuid": uuid_schema,
-        "seqrun_uuid": uuid_schema,
-        "file_uuid": uuid_schema,
-        "name": generic_string,
-        "index_for": dna_string,
-        "index_rev": dna_string,
-        }
-fastq_required = ['seqrun_uuid','file_uuid','index_for','index_rev']
 class Fastq(db.Model):
-    validator = schema_generator(fastq_schema,fastq_required)
-    put_validator = schema_generator(fastq_schema,[])
-
     __tablename__ = 'fastqs'
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
     time_updated = db.Column(db.DateTime(timezone=True), onupdate=func.now())
+
+    file_name = db.Column(db.String)
     seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
-    name = db.Column(db.String)
 
-    file_uuid = db.Column(UUID, db.ForeignKey('files.uuid'),nullable=False)
+    # Shared
+    instrument_id = db.Column(db.String())
+    flow_cell_id = db.Column(db.String())
+    run_id = db.Column(db.String())
 
-    index_for = db.Column(db.String)
-    index_rev = db.Column(db.String)
-    
-    def toJSON(self,full=None):
-        dictionary= {'uuid':self.uuid,'time_created':self.time_created,'time_updated':self.time_updated,'seqrun_uuid':self.seqrun_uuid,'file_uuid':self.file_uuid,'index_for':self.index_for,'index_rev':self.index_rev}
-        if full=='full':
-            dictionary['pileups'] = [pileup.uuid for pileup in self.pileups]
-        return dictionary
+    # Types
+    type_instrument = db.Column(db.String())
+    type_sequencing = db.Column(db.String())
 
+    # Fastq
+    sequence = db.Column(db.String())
+    comments = db.Column(db.String())
+    read_quality = db.Column(db.String())
 
+    # Nanopore
+    read = db.Column(db.String())
+    channel = db.Column(db.String())
+    start_time = db.Column(db.String())
+    basecaller = db.Column(db.String())
+    basecaller_version = db.Column(db.String())
 
+    # Illumina
+    lane = db.Column(db.Integer())
+    tile_number = db.Column(db.Integer())
+    x_coord = db.Column(db.Integer())
+    y_coord = db.Column(db.Integer())
+    member_pair = db.Column(db.Integer())
+    read_filter = db.Column(db.String()) # Y or N
+    control_bits = db.Column(db.Integer())
+    index_for = db.Column(db.String())
+    index_rev = db.Column(db.String()) 
+
+class Sam(db.Model):
+    __tablename__ = 'sams'
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
+    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    time_updated = db.Column(db.DateTime(timezone=True), onupdate=func.now())
+
+    # https://en.wikipedia.org/wiki/SAM_(file_format)
+    # https://samtools.github.io/hts-specs/SAMv1.pdf
+    qname = db.Column(db.String())
+    flag = db.Column(db.Integer())
+    rname = db.Column(db.String())
+    pos = db.Column(db.Integer())
+    mapq = db.Column(db.Integer())
+    cigar = db.Column(db.String())
+    rnext = db.Column(db.String())
+    pnext = db.Column(db.Integer())
+    tlen = db.Column(db.Integer())
+    seq = db.Column(db.String())
+    qual = db.Column(db.String())
+
+class Pileup_lines(db.Model):
+    __tablename__ = 'pileup_lines'
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
+    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    time_updated = db.Column(db.DateTime(timezone=True), onupdate=func.now())
+
+    # https://en.wikipedia.org/wiki/Pileup_format
+    pileup_uuid = db.Column(UUID, db.ForeignKey('pileups.uuid'), nullable=False)
+    sequence = db.Column(db.String())
+    position = db.Column(db.Integer())
+    reference_base = db.Column(db.String())
+    read_count = db.Column(db.Integer())
+    read_results = db.Column(db.String())
+    quality = db.Column(db.String())
