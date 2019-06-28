@@ -1,6 +1,5 @@
-import boto3
 import os
-from botocore.client import ClientError
+
 
 # Setup description
 API_TITLE = os.environ['API_TITLE']

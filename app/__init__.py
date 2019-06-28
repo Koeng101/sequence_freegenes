@@ -7,7 +7,6 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
-from flask_expects_json import expects_json # Json schema
 
 from flask_restplus import Api, Resource, fields
 from flask.views import MethodView
@@ -28,7 +27,8 @@ from .models import db
 
 from .routes import ns
 from kg_flask_crud import ns_token
-ns = ns.append(ns_token)
+ns.append(ns_token)
+
 # initialization
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = URL

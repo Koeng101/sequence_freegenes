@@ -1,14 +1,10 @@
-ifrom sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy
 from sqlalchemy.sql import func
 from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from flask import Flask, abort, request, jsonify, g, url_for, Response
 import uuid
-
-
-from .config import SPACES
-from .config import BUCKET
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -107,7 +103,7 @@ pileup_schema = {
         "sample_uuid": uuid_schema,
         "seqrun_uuid": uuid_schema,
         "index_for": generic_string,
-        "index_rev": generic_String,
+        "index_rev": generic_string,
         }
 pileup_required = ['full_search_sequence','target_sequence','sample_uuid','index_for','index_rev']
 class Pileup(db.Model):
