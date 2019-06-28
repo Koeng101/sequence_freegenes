@@ -1,4 +1,4 @@
-from sqlalchemy.dialects.postgresql import UUID
+ifrom sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy
 from sqlalchemy.sql import func
 from flask_sqlalchemy import SQLAlchemy
