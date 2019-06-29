@@ -1,4 +1,4 @@
-import requests
+#import requests
 from redis import Redis
 from rq import Queue
 import pandas as pd
@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import time
+import sys
 
 from seq import sequence, test_print
 # Init rq
@@ -26,6 +27,14 @@ q = Queue(connection=Redis(), default_timeout=7200)
 #reads = ['/home/koeng/gits/sequence_freegenes/merge-all_S1_L001_R2_001.fastq.gz','/home/koeng/gits/sequence_freegenes/merge-all_S1_L001_R1_001.fastq.gz']
 #
 #job = q.enqueue(sequence, args=('test',big_seq,reads))
+
+json_file = {'file_name': 'merge-all_S1_L001_R2_001.fastq.gz'}
+f = gzip.open('/home/koeng/gits/sequence_freegenes/merge-all_S1_L001_R2_001.fastq.gz', 'wb')
+print(f)
+
+
+sys.exit()
+
 job = q.enqueue(test_print, args=('hello world',))
 #print(sequence('test',big_seq,reads))
 
