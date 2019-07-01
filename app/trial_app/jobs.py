@@ -51,7 +51,6 @@ def fasta_to_db(url,input_file,file_name,seqrun_id,type_sequencing='illumina',ty
                 indexs = doc[10].strip('\n').split("+")
                 new_fastq.index_for=indexs[0]
                 new_fastq.index_rev=indexs[1]
-
             continue
         elif count == 1: # Sequence
             count+=1
@@ -71,11 +70,12 @@ def fasta_to_db(url,input_file,file_name,seqrun_id,type_sequencing='illumina',ty
     session.commit()
     return 'Completed without error'
 
-def fastq_to_sam(url,index_for,index_rev,seqrun_id,seq_search):
+def fastq_to_sam(url,index_for,index_rev,seqrun_id,bigseq):
     engine = create_engine(url)
     Base.metadata.create_all(engine)
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
+
 
     sql_query = "SELECT fastqs.docs,fastqs.sequence,fastqs.comments,fastqs.read_quality FROM fastqs WHERE fastqs.index_for='{}' AND fastqs.index_rev='{}' AND fastqs.seqrun_id={}"
 
@@ -89,11 +89,54 @@ def fastq_to_sam(url,index_for,index_rev,seqrun_id,seq_search):
 
     with open('/dev/shm/seq/tmp.fa', 'w') as f:
         f.write('>test\n')
-        f.write(seq_search)
-    minimap_command = 
-    pileup_file = subprocess.check_output("/home/koeng/gits/minimap2/./minimap2 --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq > /dev/shm/seq/alignment.sam",shell=True)
+        f.write(bigseq)
+
+    pileup_file = subprocess.check_output("/home/koeng/gits/minimap2/./minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq > /dev/shm/seq/alignment.sam",shell=True)
+
+    new_samfile = SamFile(seqrun_id=seqrun_id,bigseq=bigseq,alignment_tool='minimap2',alignment_tool_version='2.17-r943-dirty',index_for=index_for,index_rev=index_rev)
+    session.add(new_samfile)
+    session.commit()
+
+    with open('/dev/shm/seq/alignment.sam','r') as sam_file:
+        for i,line in enumerate(sam_file):
+            lst = line.split('\t')
+            if i > 4: # Skip headers, figure that out later
+                n = Sam(samfile_id=new_samfile.id)
+                n.qname = lst[0]
+                n.flag = lst[1]
+                n.rname = lst[2]
+                n.pos = lst[3]
+                n.mapq = lst[4]
+                n.cigar = lst[5]
+                n.rnext = lst[6]
+                n.pnext = lst[7]
+                n.tlen = lst[8]
+                n.seq = lst[9]
+                n.qual = lst[10]
+
+                for e in lst[11:]:
+                    setattr(n,e[0:2],e)
+                session.add(n)
+                if i%10000==0:
+                    print('commit')
+                    session.commit()
+                    
+        session.commit()
+    return 'Completed without error'
 
 
+def sam_to_cls(url,sam_file):
+    engine = create_engine(url)
+    Base.metadata.create_all(engine)
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    #new_samfile = SamFile(seqrun_id=seqrun_id,bigseq=bigseq,alignment_tool='minimap2',alignment_tool_version='2.17-r943-dirty',index_for=index_for,index_rev=index_rev)
+    for i,line in enumerate(sam_file):
+        lst = line.split('\t')
+        
+
+        print(len(lst[11:]))
 
 
 

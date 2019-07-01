@@ -47,15 +47,21 @@ class SamFile(Base):
     id = Column(Integer, primary_key=True)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
 
+    seqrun_id = Column(Integer, ForeignKey('seqruns.id'), nullable=False)
+
     bigseq = Column(String)
     alignment_tool = Column(String)
     alignment_tool_version = Column(String)
+    index_for = Column(String)
+    index_rev = Column(String)
+
 
 class Sam(Base):
     __tablename__ = 'sams'
     id = Column(Integer, primary_key=True)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
 
+    samfile_id = Column(Integer, ForeignKey('samfiles.id'), nullable=False)
     # https://en.wikipedia.org/wiki/SAM_(file_format)
     # https://samtools.github.io/hts-specs/SAMv1.pdf
     qname = Column(String)
@@ -69,12 +75,26 @@ class Sam(Base):
     tlen = Column(Integer())
     seq = Column(String)
     qual = Column(String)
-    index_for = Column(String)
-    index_rev = Column(String)
 
-    alignment_tool = Column(String)
-    alignment_tool_version = Column(String)
+    # In spec
+    tp = Column(String)
+    cm = Column(String)
+    s1 = Column(String)
+    s2 = Column(String)
+    NM = Column(String)
+    MD = Column(String)
+    AS = Column(String)
+    ms = Column(String)
+    nn = Column(String)
+    ts = Column(String)
+    cg = Column(String)
+    cs = Column(String)
+    dv = Column(String)
+    de = Column(String)
+    rl = Column(String)
 
+    # Not in spec
+    SA = Column(String)
 
 class SeqRun(Base):
     __tablename__ = 'seqruns'
@@ -89,6 +109,7 @@ class SeqRun(Base):
     sequencing_type = Column(String) # illumina, nanopore, etc
     machine = Column(String) # minion, iseq, etc
     provider = Column(String) # in-house
+
 
     fastqs = relationship('Fastq',backref='seqrun')
 
