@@ -91,7 +91,8 @@ def fastq_to_sam(url,index_for,index_rev,seqrun_id,bigseq):
         f.write('>test\n')
         f.write(bigseq)
 
-    pileup_file = subprocess.check_output("/home/koeng/gits/minimap2/./minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq > /dev/shm/seq/alignment.sam",shell=True)
+    pileup_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq > /dev/shm/seq/alignment.sam",shell=True)
+    print(pileup_file)
 
     new_samfile = SamFile(seqrun_id=seqrun_id,bigseq=bigseq,alignment_tool='minimap2',alignment_tool_version='2.17-r943-dirty',index_for=index_for,index_rev=index_rev)
     session.add(new_samfile)
