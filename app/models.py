@@ -149,7 +149,7 @@ class SeqRun(db.Model):
     fastqs = relationship('Fastq',backref='seqrun')
 
     def toJSON(self,full=None):
-        dictionary = {"uuid": self.uuid, "time_created": self.time_created.isoformat()'name':self.name,'notes':self.notes,'run_id':self.run_id,'machine_id':self.machine_id,'sequencing_type':self.sequencing_type,'machine':self.machine,'provider':self.provider}
+        dictionary = {"uuid": self.uuid, "time_created": self.time_created.isoformat(),'name':self.name,'notes':self.notes,'run_id':self.run_id,'machine_id':self.machine_id,'sequencing_type':self.sequencing_type,'machine':self.machine,'provider':self.provider}
         if full=='full':
             pass
         return dictionary
