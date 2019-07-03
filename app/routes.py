@@ -1,7 +1,6 @@
 from kg_flask_crud import create_crud,requires_auth
 from .models import *
-from redis import Redis
-from rq.job import Job
+
 from .jobs import fasta_to_db
 from .config import *
 from flask_restplus import Api, Resource, fields, Namespace
