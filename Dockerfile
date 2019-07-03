@@ -8,12 +8,13 @@ RUN apt-get update && apt-get install -y apt-transport-https python3-pip python-
 # Install requirements
 COPY . /app
 WORKDIR /app
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Install minimap2
 RUN mkdir storage
 RUN cd ./storage
 RUN curl -L https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x64-linux.tar.bz2 | tar -jxvf -
+RUN ls
 RUN cd ..
  
 # Start app
