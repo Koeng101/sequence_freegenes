@@ -13,7 +13,7 @@ import os
 import shutil
 import subprocess
 
-from models import *
+from .models import *
 
 Base = declarative_base()
 

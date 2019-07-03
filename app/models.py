@@ -27,16 +27,15 @@ generic_string = {'type': 'string'}
 generic_num = { "type": "number" }
 
 def base_dict(cls):
-    return {"id": cls.id, "time_created": cls.time_created.isoformat()}
-
+    return {"uuid": cls.uuid, "time_created": cls.time_created.isoformat()}
 
 
 class Fastq(db.Model):
     __tablename__ = 'fastqs'
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    seqrun_id = db.Column(db.Integer, db.ForeignKey('seqruns.id'), nullable=False)
+    seqrun_uuid = db.Column(db.Integer, db.ForeignKey('seqruns.uuid'), nullable=False)
     file_name = db.Column(db.String)
 
     # Shared
@@ -67,10 +66,10 @@ class Fastq(db.Model):
 
 class SamFile(db.Model):
     __tablename__ = 'samfiles'
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    seqrun_id = db.Column(db.Integer, db.ForeignKey('seqruns.id'), nullable=False)
+    seqrun_uuid = db.Column(db.Integer, db.ForeignKey('seqruns.uuid'), nullable=False)
 
     bigseq = db.Column(db.String)
     alignment_tool = db.Column(db.String)
@@ -81,10 +80,10 @@ class SamFile(db.Model):
 
 class Sam(db.Model):
     __tablename__ = 'sams'
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    samfile_id = db.Column(db.Integer, db.ForeignKey('samfiles.id'), nullable=False)
+    samfile_uuid = db.Column(db.Integer, db.ForeignKey('samfiles.uuid'), nullable=False)
     # https://en.wikipedia.org/wiki/SAM_(file_format)
     # https://samtools.github.io/hts-specs/SAMv1.pdf
     qname = db.Column(db.String)
@@ -134,7 +133,7 @@ class SeqRun(db.Model):
     put_validator = schema_generator(seqrun_schema,[])
 
     __tablename__ = 'seqruns'
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
     time_updated = db.Column(db.DateTime(timezone=True), onupdate=func.now())
 
@@ -157,7 +156,7 @@ class SeqRun(db.Model):
 
 class PileupFile(db.Model):
     __tablename__ = 'pileupfiles'
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     status = db.Column(db.String) # mutation,confirmed,etc
@@ -167,15 +166,15 @@ class PileupFile(db.Model):
     index_rev = db.Column(db.String)
 
     sample_uuid = db.Column(db.String)
-    seqrun_id = db.Column(db.Integer, db.ForeignKey('seqruns.id'), nullable=False)
+    seqrun_uuid = db.Column(db.Integer, db.ForeignKey('seqruns.uuid'), nullable=False)
 
 class PileupLine(db.Model):
     __tablename__ = 'pileups'
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     # https://en.wikipedia.org/wiki/Pileup_format
-    pileup_id = db.Column(db.Integer, db.ForeignKey('pileups.id'), nullable=False)
+    pileup_uuid = db.Column(db.Integer, db.ForeignKey('pileups.uuid'), nullable=False)
     sequence = db.Column(db.String)
     position = db.Column(db.Integer)
     reference_base = db.Column(db.String)
@@ -183,12 +182,4 @@ class PileupLine(db.Model):
     read_results = db.Column(db.String)
     quality = db.Column(db.String)
 
-class Job(db.Model):
-    __tablename__ = 'jobs'
-    id = db.Column(db.Integer, primary_key=True)
-    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
-
-    job_id = db.Column(db.String)
-    status = db.Column(db.String)
-    description = db.Column(db.String)
 
