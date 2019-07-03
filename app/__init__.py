@@ -56,8 +56,4 @@ for n in ns:
     api.add_namespace(n)
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
-elif __name__ == '__main__':
-    app.run(host='0.0.0.0')
 
