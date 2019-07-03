@@ -1,4 +1,6 @@
 import gzip
+from sqlalchemy.dialects.postgresql import UUID
+import sqlalchemy
 #from sqlalchemy import Column, db.ForeignKey, db.Integer, db.String,db.DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -35,7 +37,7 @@ class Fastq(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    seqrun_uuid = db.Column(db.Integer, db.ForeignKey('seqruns.uuid'), nullable=False)
+    seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
     file_name = db.Column(db.String)
 
     # Shared
@@ -69,7 +71,7 @@ class SamFile(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    seqrun_uuid = db.Column(db.Integer, db.ForeignKey('seqruns.uuid'), nullable=False)
+    seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
 
     bigseq = db.Column(db.String)
     alignment_tool = db.Column(db.String)
@@ -83,7 +85,7 @@ class Sam(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    samfile_uuid = db.Column(db.Integer, db.ForeignKey('samfiles.uuid'), nullable=False)
+    samfile_uuid = db.Column(UUID, db.ForeignKey('samfiles.uuid'), nullable=False)
     # https://en.wikipedia.org/wiki/SAM_(file_format)
     # https://samtools.github.io/hts-specs/SAMv1.pdf
     qname = db.Column(db.String)
@@ -166,7 +168,7 @@ class PileupFile(db.Model):
     index_rev = db.Column(db.String)
 
     sample_uuid = db.Column(db.String)
-    seqrun_uuid = db.Column(db.Integer, db.ForeignKey('seqruns.uuid'), nullable=False)
+    seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
 
 class PileupLine(db.Model):
     __tablename__ = 'pileups'
@@ -174,7 +176,7 @@ class PileupLine(db.Model):
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     # https://en.wikipedia.org/wiki/Pileup_format
-    pileup_uuid = db.Column(db.Integer, db.ForeignKey('pileups.uuid'), nullable=False)
+    pileup_uuid = db.Column(UUID, db.ForeignKey('pileups.uuid'), nullable=False)
     sequence = db.Column(db.String)
     position = db.Column(db.Integer)
     reference_base = db.Column(db.String)
