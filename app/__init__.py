@@ -54,6 +54,6 @@ migrate = Migrate(app, db)
 
 for n in ns:
     api.add_namespace(n)
-
+    print('added namespace')
 
 
