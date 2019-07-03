@@ -12,12 +12,11 @@ WORKDIR /app
 RUN pip3 install -r requirements.txt
 
 # Install minimap2
-RUN mkdir storage
-RUN cd ./storage
 RUN curl -L https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.17_x64-linux.tar.bz2 | tar -jxvf -
 RUN ls
 RUN cd ..
- 
+RUN ls
+
 # Start app
 ENTRYPOINT ["python3"]
 CMD ["wsgi.py"]
