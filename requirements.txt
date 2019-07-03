@@ -15,7 +15,7 @@ gunicorn==19.9.0
 itsdangerous==1.1.0
 Jinja2==2.10.1
 jsonschema==3.0.1
-kg-flask-crud==0.0.1
+kg-flask-crud==0.0.4
 Mako==1.0.12
 MarkupSafe==1.1.1
 numpy==1.16.4
