@@ -45,7 +45,7 @@ authorizations = {
             'name': 'token'}
         }
 
-api = Api(app, version='.9', title=API_TITLE,
+api = Api(app, title=API_TITLE,
             description=API_DESCRIPTION,
             authorizations=authorizations
             )
