@@ -16,5 +16,4 @@ RUN curl -L https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.1
 RUN ls
 
 # Start app
-ENTRYPOINT ["python3"]
-CMD ["wsgi.py"]
+CMD gunicorn wsgi:app --workers=4
