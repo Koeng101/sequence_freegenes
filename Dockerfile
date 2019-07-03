@@ -3,7 +3,7 @@ FROM ubuntu:16.04
 MAINTAINER Keoni Gandall "koeng101@gmail.com"
 
 # Update
-RUN apt-get update && apt-get install -y apt-transport-https python-pip python-dev curl samtools
+RUN apt-get update && apt-get install -y apt-transport-https python3-pip python-dev curl samtools
 
 # Install requirements
 COPY . /app
@@ -17,5 +17,5 @@ RUN curl -L https://github.com/lh3/minimap2/releases/download/v2.17/minimap2-2.1
 RUN cd ..
  
 # Start app
-ENTRYPOINT ["python"]
+ENTRYPOINT ["python3"]
 CMD ["wsgi.py"]
