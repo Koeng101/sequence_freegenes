@@ -9,7 +9,7 @@ WORKDIR /app
 # Update
 #RUN yum install -y build-essential 
 RUN apk add --no-cache --virtual=.build_dependencies musl-dev gcc python3-dev libffi-dev linux-headers && \
-    pip install -r tasks/requirements.txt && \
+    pip install -r requirements.txt && \
     invoke app.dependencies.install && \
     ( \
         if [ "$INCLUDE_POSTGRESQL" = 'true' ]; then \
