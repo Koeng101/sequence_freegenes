@@ -9,7 +9,6 @@ WORKDIR /app
 # Update
 #RUN yum install -y build-essential 
 RUN apk add --no-cache --virtual=.build_dependencies musl-dev gcc python3-dev libffi-dev linux-headers && \
-    cd /opt/www && \
     pip install -r tasks/requirements.txt && \
     invoke app.dependencies.install && \
     ( \
