@@ -3,7 +3,7 @@ FROM centos:centos7
 MAINTAINER Keoni Gandall "koeng101@gmail.com"
 
 # Update
-RUN yum install build-essential libssl-dev python3-dev python3-pip curl samtools musl-dev gcc libffi-dev 
+RUN yum install -y build-essential libssl-dev python3-dev python3-pip curl samtools musl-dev gcc libffi-dev 
 
 # Install requirements
 COPY . /app
