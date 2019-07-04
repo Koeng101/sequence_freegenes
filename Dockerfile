@@ -4,7 +4,15 @@ MAINTAINER Keoni Gandall "koeng101@gmail.com"
 
 # Update
 #RUN yum install -y build-essential 
-run apk add --update --no-cache python3 python3-dev gcc musl-dev libffi-dev libressl-dev curl
+RUN apk add --update --no-cache python3 python3-dev gcc musl-dev libffi-dev libressl-dev curl
+
+RUN apk add --no-cache --virtual .build-deps \
+    gcc \
+    python3-dev \
+    musl-dev \
+    postgresql-dev \
+    && pip install --no-cache-dir psycopg2 \
+    && apk del --no-cache .build-deps
 
 # Install requirements
 COPY . /app
