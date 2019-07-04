@@ -4,7 +4,7 @@ MAINTAINER Keoni Gandall "koeng101@gmail.com"
 
 # Update
 RUN apt-get update 
-RUN apt-get install -y python3-pip curl samtools
+RUN apt-get install -y libssl-dev python3-pip curl samtools
 
 # Install requirements
 COPY . /app
