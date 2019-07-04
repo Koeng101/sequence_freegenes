@@ -36,7 +36,7 @@ def fasta_to_db(url,input_file,file_name,seqrun_id,type_sequencing='illumina',ty
                 new_fastq = Fastq(file_name=file_name,type_instrument=type_instrument,type_sequencing=type_sequencing,docs=line.strip('\n'))
                 doc = flatten_list([lst.split(':') for lst in line.split(' ')]) # Split between ' ', then split between ':', then flatten that resulting list
                 # Add to class
-                new_fastq.seqrun_id=seqrun_id
+                new_fastq.seqrun_uuid=seqrun_id
                 new_fastq.instrument_id=doc[0]
                 new_fastq.run_id=doc[1]
                 new_fastq.flow_cell_id=doc[2]
