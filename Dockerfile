@@ -5,7 +5,7 @@ MAINTAINER Keoni Gandall "koeng101@gmail.com"
 # Update
 #RUN yum install -y build-essential 
 RUN yum install -y openssl-devel
-RUN yum install -y python3-dev
+RUN yum install -y python3-devel
 RUN yum install -y python3-pip
 RUN yum install -y curl
 RUN yum install -y samtools
