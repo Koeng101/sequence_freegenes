@@ -5,6 +5,7 @@ MAINTAINER Keoni Gandall "koeng101@gmail.com"
 # Update
 #RUN yum install -y build-essential 
 RUN apk add curl
+RUN apk add gcc
 
 # Install requirements
 COPY . /app
