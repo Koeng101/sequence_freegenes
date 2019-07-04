@@ -4,8 +4,7 @@ MAINTAINER Keoni Gandall "koeng101@gmail.com"
 
 # Update
 #RUN yum install -y build-essential 
-RUN apk add curl
-RUN apk add gcc
+run apk add --update --no-cache python3 python3-dev gcc musl-dev libffi-dev libressl-dev curl
 
 # Install requirements
 COPY . /app
