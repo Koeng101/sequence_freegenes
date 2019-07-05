@@ -26,7 +26,7 @@ class NewFile(Resource):
         seqrun_id = json_file['seqrun_uuid']
         with gzip.open(file,'rt') as fin:
             full_file = fin.readlines()
-            new_job = threading.Thread(target=fasta_to_db, args=(URL, full_file,file_name,seqrun_id))
+            new_job = threading.Thread(target=fasta_to_db, args=(URL, full_file,file_name,seqrun_id,json_file['index_for'],json_file['index_rev']))
             new_job.start()
         return jsonify({'message': 'Successful, job queued'})
 

@@ -54,15 +54,17 @@ class Fastq(db.Model):
     read_quality = db.Column(db.String)
 
     ## Illumina   
-    lane = db.Column(db.Integer())
-    tile_number = db.Column(db.Integer())
-    x_coord = db.Column(db.Integer())
-    y_coord = db.Column(db.Integer())
-    member_pair = db.Column(db.Integer())
+    lane = db.Column(db.Integer)
+    tile_number = db.Column(db.Integer)
+    x_coord = db.Column(db.Integer)
+    y_coord = db.Column(db.Integer)
+    member_pair = db.Column(db.Integer)
     read_filter = db.Column(db.String) # Y or N
-    control_bits = db.Column(db.Integer())
+    control_bits = db.Column(db.Integer)
     index_for = db.Column(db.String)
     index_rev = db.Column(db.String)
+    defined_index_for = db.Column(db.String)
+    defined_index_rev = db.Column(db.String)
 
 class SamFile(db.Model):
     __tablename__ = 'samfiles'
@@ -87,14 +89,14 @@ class Sam(db.Model):
     # https://en.wikipedia.org/wiki/SAM_(file_format)
     # https://samtools.github.io/hts-specs/SAMv1.pdf
     qname = db.Column(db.String)
-    flag = db.Column(db.Integer())
+    flag = db.Column(db.Integer)
     rname = db.Column(db.String)
-    pos = db.Column(db.Integer())
-    mapq = db.Column(db.Integer())
+    pos = db.Column(db.Integer)
+    mapq = db.Column(db.Integer)
     cigar = db.Column(db.String)
     rnext = db.Column(db.String)
-    pnext = db.Column(db.Integer())
-    tlen = db.Column(db.Integer())
+    pnext = db.Column(db.Integer)
+    tlen = db.Column(db.Integer)
     seq = db.Column(db.String)
     qual = db.Column(db.String)
 
@@ -114,8 +116,6 @@ class Sam(db.Model):
     dv = db.Column(db.String)
     de = db.Column(db.String)
     rl = db.Column(db.String)
-
-    # Not in spec
     SA = db.Column(db.String)
 
 seqrun_schema = {

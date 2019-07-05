@@ -20,7 +20,7 @@ Base = declarative_base()
 def flatten_list(l):
     return [item for sublist in l for item in sublist]
 
-def fasta_to_db(url,input_file,file_name,seqrun_id,type_sequencing='illumina',type_instrument='iseq'):
+def fasta_to_db(url,input_file,file_name,seqrun_id,index_for,index_rev,type_sequencing='illumina',type_instrument='iseq'):
     engine = create_engine(url)
     Base.metadata.create_all(engine)
     DBSession = sessionmaker(bind=engine)
@@ -47,10 +47,14 @@ def fasta_to_db(url,input_file,file_name,seqrun_id,type_sequencing='illumina',ty
                 new_fastq.member_pair=doc[7]
                 new_fastq.read_filter=doc[8]
                 new_fastq.control_bits=doc[9]
+                new_fastq.defined_index_for = index_for
+                new_fastq.defined_index_rev = index_rev
 
-                indexs = doc[10].strip('\n').split("+")
-                new_fastq.index_for=indexs[0]
-                new_fastq.index_rev=indexs[1]
+                if len(doc) > 10:
+                    indexs = doc[10].strip('\n').split("+")
+                    if len(indexs) > 1:
+                        new_fastq.index_for=indexs[0]
+                        new_fastq.index_rev=indexs[1]
             continue
         elif count == 1: # Sequence
             count+=1
