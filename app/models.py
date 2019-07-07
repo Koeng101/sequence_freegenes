@@ -66,16 +66,17 @@ class Fastq(db.Model):
     defined_index_for = db.Column(db.String)
     defined_index_rev = db.Column(db.String)
 
-class SamFile(db.Model):
-    __tablename__ = 'samfiles'
+class Samples(db.Model):
+    __tablename__ = 'samples'
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
+    sample_uuid = db.Column(UUID, nullable=True)
+    derived_from = db.Column(UUID, nullable=False)
+    gene_id = db.Column(db.String,nullable=False)
+
     seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
 
-    bigseq = db.Column(db.String)
-    alignment_tool = db.Column(db.String)
-    alignment_tool_version = db.Column(db.String)
     index_for = db.Column(db.String)
     index_rev = db.Column(db.String)
 
@@ -85,7 +86,10 @@ class Sam(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    samfile_uuid = db.Column(UUID, db.ForeignKey('samfiles.uuid'), nullable=False)
+    samples_uuid = db.Column(UUID, db.ForeignKey('samples.uuid'), nullable=False)
+    alignment_tool = db.Column(db.String)
+    alignment_tool_version = db.Column(db.String)
+
     # https://en.wikipedia.org/wiki/SAM_(file_format)
     # https://samtools.github.io/hts-specs/SAMv1.pdf
     qname = db.Column(db.String)
@@ -154,32 +158,5 @@ class SeqRun(db.Model):
             pass
         return dictionary
 
-class PileupFile(db.Model):
-    __tablename__ = 'pileupfiles'
-    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
-    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
-
-    status = db.Column(db.String) # mutation,confirmed,etc
-    full_search_sequence = db.Column(db.String)
-    target_sequence = db.Column(db.String)
-    index_for = db.Column(db.String)
-    index_rev = db.Column(db.String)
-
-    sample_uuid = db.Column(db.String)
-    seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
-
-class PileupLine(db.Model):
-    __tablename__ = 'pileups'
-    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
-    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
-
-    # https://en.wikipedia.org/wiki/Pileup_format
-    pileup_uuid = db.Column(UUID, db.ForeignKey('pileups.uuid'), nullable=False)
-    sequence = db.Column(db.String)
-    position = db.Column(db.Integer)
-    reference_base = db.Column(db.String)
-    read_count = db.Column(db.Integer)
-    read_results = db.Column(db.String)
-    quality = db.Column(db.String)
 
 
