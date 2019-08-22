@@ -80,9 +80,9 @@ def fastq_to_sam(url,index_for,index_rev,seqrun_id,bigseq):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-
     sql_query = "SELECT fastqs.docs,fastqs.sequence,fastqs.comments,fastqs.read_quality FROM fastqs WHERE fastqs.defined_index_for='{}' AND fastqs.defined_index_rev='{}' AND fastqs.seqrun_uuid='{}'"
 
+    print('hello')
     with engine.connect() as con:
         rs = con.execute(sql_query.format(index_for,index_rev,seqrun_id))
 
@@ -95,8 +95,10 @@ def fastq_to_sam(url,index_for,index_rev,seqrun_id,bigseq):
         f.write('>test\n')
         f.write(bigseq)
 
-    pileup_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -h -F 4 - | samtools sort - -O sam | samtools mpileup -f /dev/shm/seq/tmp.fa -a - -o /dev/shm/seq/test.pileup",shell=True)
+    pileup_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -h -F 4 - | samtools sort - -O sam",shell=True)
 
+
+# -o /dev/shm/seq/sorted_alignment.sam"
     # samtools view -h -F 4 alignment.sam > new_alignment.sam
     # samtools sort new_alignment.sam -o sorted_alignment.sam
     # samtools mpileup -d 1000 -f tmp.fa -a new_alignment.sam -o test.pileup

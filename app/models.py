@@ -27,6 +27,7 @@ uuid_regex = '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
 uuid_schema = {'type': 'string','pattern': uuid_regex}
 generic_string = {'type': 'string'}
 generic_num = { "type": "number" }
+dna_string = {"type": "string", "pattern": "^[ATGC]*$"}
 
 
 
@@ -66,19 +67,36 @@ class Fastq(db.Model):
     defined_index_for = db.Column(db.String)
     defined_index_rev = db.Column(db.String)
 
-class Samples(db.Model):
+sample_schema = {
+        "sample_uuid": uuid_schema,
+        "seqrun_uuid": uuid_schema,
+        "index_for": dna_string,
+        "index_rev": dna_string,
+        "search_seq": dna_string,
+        "full_seq": dna_string
+        
+        }
+sample_required = ['sample_uuid','seqrun_uuid','index_for','index_rev', 'search_seq', 'full_seq']
+class Sample(db.Model):
+    validator = schema_generator(sample_schema,sample_required)
+    put_validator = schema_generator(sample_schema,[])
+
     __tablename__ = 'samples'
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
     sample_uuid = db.Column(UUID, nullable=True)
-    derived_from = db.Column(UUID, nullable=False)
-    gene_id = db.Column(db.String,nullable=False)
-
     seqrun_uuid = db.Column(UUID, db.ForeignKey('seqruns.uuid'), nullable=False)
 
     index_for = db.Column(db.String)
     index_rev = db.Column(db.String)
+
+    search_seq = db.Column(db.String)
+    full_seq = db.Column(db.String)
+
+    def toJSON(self,full=None):
+        return {'uuid':self.uuid,'sample_uuid':self.sample_uuid,'seqrun_uuid':self.seqrun_uuid,'index_for':self.index_for,'index_rev':self.index_rev,'search_seq':self.search_seq,'full_seq':self.full_seq}
+
 
 
 class Sam(db.Model):
@@ -151,6 +169,7 @@ class SeqRun(db.Model):
     well = db.Column(db.String)
 
     fastqs = relationship('Fastq',backref='seqrun')
+    samples = relationship('Sample',backref='seqrun')
 
     def toJSON(self,full=None):
         dictionary = {"uuid": self.uuid, "time_created": self.time_created.isoformat(),'name':self.name,'notes':self.notes,'run_id':self.run_id,'machine_id':self.machine_id,'sequencing_type':self.sequencing_type,'machine':self.machine,'provider':self.provider}
