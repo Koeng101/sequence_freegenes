@@ -74,65 +74,66 @@ def fasta_to_db(url,input_file,file_name,seqrun_id,index_for,index_rev,type_sequ
     session.commit()
     return 'Completed without error'
 
-def fastq_to_sam(url,index_for,index_rev,seqrun_id,bigseq):
+def fastq_to_sam(url,sample_uuid):
+
+    align_vers = str(subprocess.check_output("minimap2 --version",shell=True).decode("utf-8")).rstrip()
+    print(align_vers)
+
     engine = create_engine(url)
     Base.metadata.create_all(engine)
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    sql_query = "SELECT fastqs.docs,fastqs.sequence,fastqs.comments,fastqs.read_quality FROM fastqs WHERE fastqs.defined_index_for='{}' AND fastqs.defined_index_rev='{}' AND fastqs.seqrun_uuid='{}'"
+    # Get samples
+    obj = session.query(Sample).filter_by(uuid=sample_uuid).first()
+    index_for = obj.index_for
+    index_rev = obj.index_rev
+    seqrun_uuid = obj.seqrun_uuid
+    bigseq = obj.full_seq
+
+    sql_query = "SELECT fastqs.uuid,fastqs.sequence,fastqs.comments,fastqs.read_quality FROM fastqs WHERE fastqs.defined_index_for='{}' AND fastqs.defined_index_rev='{}' AND fastqs.seqrun_uuid='{}'"
 
     print('hello')
     with engine.connect() as con:
-        rs = con.execute(sql_query.format(index_for,index_rev,seqrun_id))
+        rs = con.execute(sql_query.format(index_for,index_rev,seqrun_uuid))
 
         with open('/dev/shm/seq/tmp.fastq', 'w') as f:
             for row in rs:
-                for obj in row:
-                    f.write(obj + '\n')
+                for i,obj in enumerate(row):
+                    if i == 0:
+                        f.write("@{}".format(str(obj)) + '\n')
+                    else:
+                        f.write(obj + '\n')
 
     with open('/dev/shm/seq/tmp.fa', 'w') as f:
         f.write('>test\n')
         f.write(bigseq)
 
-    pileup_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -h -F 4 - | samtools sort - -O sam",shell=True)
-
-
-# -o /dev/shm/seq/sorted_alignment.sam"
-    # samtools view -h -F 4 alignment.sam > new_alignment.sam
-    # samtools sort new_alignment.sam -o sorted_alignment.sam
-    # samtools mpileup -d 1000 -f tmp.fa -a new_alignment.sam -o test.pileup
-    print(pileup_file)
-
-    #new_samfile = SamFile(seqrun_id=seqrun_id,bigseq=bigseq,alignment_tool='minimap2',alignment_tool_version='2.17-r943-dirty',index_for=index_for,index_rev=index_rev)
-    #session.add(new_samfile)
-    #session.commit()
-
-    #with open('/dev/shm/seq/alignment.sam','r') as sam_file:
-    #    for i,line in enumerate(sam_file):
-    #        lst = line.split('\t')
-    #        if i > 4: # Skip headers, figure that out later
-    #            n = Sam(samfile_id=new_samfile.id)
-    #            n.qname = lst[0]
-    #            n.flag = lst[1]
-    #            n.rname = lst[2]
-    #            n.pos = lst[3]
-    #            n.mapq = lst[4]
-    #            n.cigar = lst[5]
-    #            n.rnext = lst[6]
-    #            n.pnext = lst[7]
-    #            n.tlen = lst[8]
-    #            n.seq = lst[9]
-    #            n.qual = lst[10]
-
-    #            for e in lst[11:]:
-    #                setattr(n,e[0:2],e)
-    #            session.add(n)
-    #            if i%10000==0:
-    #                print('commit')
-    #                session.commit()
-    #                
-    #    session.commit()
+    sam_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -h -F 4 - | samtools sort - -O sam",shell=True).decode("utf-8").rstrip().split('\n')
+    sams = []
+    for i,line in enumerate(sam_file):
+        lst = line.split('\t')
+        if i > 4: # Skip headers, figure that out later
+            print(lst)
+            new_sam = {
+                    "sample_uuid": sample_uuid,
+                    "fastq_uuid": lst[0],
+                    "alignment_tool": "minimap2",
+                    "alignment_tool_version": "",
+                    "flag": lst[1],
+                    "pos": lst[3],
+                    "mapq": lst[4],
+                    "cigar": lst[5],
+                    "rnext": lst[6],
+                    "pnext": lst[7],
+                    "tlen": lst[8],
+                    }
+            for e in lst[11:]:
+                new_sam[e[0:2]] = e
+            sams.append(new_sam)
+    session.bulk_insert_mappings(Sam, sams)
+    session.commit()
+    print('Upload complete')
     return 'Completed without error'
 
 

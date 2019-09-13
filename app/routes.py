@@ -37,8 +37,7 @@ class GenerateSam(Resource):
     @ns_sample.doc('generate_sam',security='token')
     @requires_auth(['moderator','admin'])
     def get(self,uuid):
-        obj = Sample.query.filter_by(uuid=uuid).first()
-        new_sam = threading.Thread(target=fastq_to_sam, args=(URL, obj.index_for, obj.index_rev, obj.seqrun_uuid, obj.full_seq))
+        new_sam = threading.Thread(target=fastq_to_sam, args=(URL,uuid))
         new_sam.start()
         return jsonify({'gotcha':'woo'})
 

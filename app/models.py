@@ -104,23 +104,20 @@ class Sam(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
     time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
-    samples_uuid = db.Column(UUID, db.ForeignKey('samples.uuid'), nullable=False)
+    sample_uuid = db.Column(UUID, db.ForeignKey('samples.uuid'), nullable=False)
+    fastq_uuid = db.Column(UUID,db.ForeignKey('fastqs.uuid'),nullable=False)
     alignment_tool = db.Column(db.String)
     alignment_tool_version = db.Column(db.String)
 
     # https://en.wikipedia.org/wiki/SAM_(file_format)
     # https://samtools.github.io/hts-specs/SAMv1.pdf
-    qname = db.Column(db.String)
     flag = db.Column(db.Integer)
-    rname = db.Column(db.String)
     pos = db.Column(db.Integer)
     mapq = db.Column(db.Integer)
     cigar = db.Column(db.String)
     rnext = db.Column(db.String)
     pnext = db.Column(db.Integer)
     tlen = db.Column(db.Integer)
-    seq = db.Column(db.String)
-    qual = db.Column(db.String)
 
     # In spec
     tp = db.Column(db.String)
