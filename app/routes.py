@@ -1,7 +1,7 @@
 from kg_flask_crud import create_crud,requires_auth
 from .models import *
 
-from .jobs import fasta_to_db, fastq_to_sam
+from .jobs import fasta_to_db, seqrun_sam_generation 
 from .config import *
 from flask_restplus import Api, Resource, fields, Namespace
 from flask import Flask, abort, request, jsonify, g, url_for, redirect
@@ -32,14 +32,14 @@ class NewFile(Resource):
         return jsonify({'message': 'Successful, job queued'})
 
 
-@ns_sample.route('/generate_sam/<uuid>')
+@ns_seqrun.route('/generate_sam/<uuid>')
 class GenerateSam(Resource):
-    @ns_sample.doc('generate_sam',security='token')
+    @ns_seqrun.doc('generate_sam',security='token')
     @requires_auth(['moderator','admin'])
     def get(self,uuid):
-        new_sam = threading.Thread(target=fastq_to_sam, args=(URL,uuid))
+        new_sam = threading.Thread(target=seqrun_sam_generation, args=(URL,uuid))
         new_sam.start()
-        return jsonify({'gotcha':'woo'})
+        return jsonify({'message':'Processing started'})
 
 ns = [ns_seqrun,ns_sample,ns_file]
 

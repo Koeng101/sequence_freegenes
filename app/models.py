@@ -168,10 +168,12 @@ class SeqRun(db.Model):
     fastqs = relationship('Fastq',backref='seqrun')
     samples = relationship('Sample',backref='seqrun')
 
+    aligned = db.Column(db.Boolean)
+
     def toJSON(self,full=None):
-        dictionary = {"uuid": self.uuid, "time_created": self.time_created.isoformat(),'name':self.name,'notes':self.notes,'run_id':self.run_id,'machine_id':self.machine_id,'sequencing_type':self.sequencing_type,'machine':self.machine,'provider':self.provider}
+        dictionary = {"uuid": self.uuid, "time_created": self.time_created.isoformat(),'name':self.name,'notes':self.notes,'run_id':self.run_id,'machine_id':self.machine_id,'sequencing_type':self.sequencing_type,'machine':self.machine,'provider':self.provider, "aligned": self.aligned}
         if full=='full':
-            pass
+            dictionary['samples'] = [sample.toJSON() for sample in self.samples]
         return dictionary
 
 
