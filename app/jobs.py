@@ -74,7 +74,7 @@ def fasta_to_db(url,input_file,file_name,seqrun_id,index_for,index_rev,type_sequ
     session.commit()
     return 'Completed without error'
 
-def seqrun_sam_generation(url,seqrun_uuid):
+def seqrun_bam_generation(url,seqrun_uuid):
 
     # Get minimap version
     align_vers = str(subprocess.check_output("minimap2 --version",shell=True).decode("utf-8")).rstrip()
@@ -104,48 +104,23 @@ def seqrun_sam_generation(url,seqrun_uuid):
     
             with open('/dev/shm/seq/tmp.fastq', 'w') as f:
                 for row in rs:
-                    for i,obj in enumerate(row):
+                    for i,r in enumerate(row):
                         if i == 0:
-                            f.write("@{}".format(str(obj)) + '\n')
+                            f.write("@{}".format(str(r)) + '\n')
                         else:
-                            f.write(obj + '\n')
+                            f.write(r + '\n')
     
 
         with open('/dev/shm/seq/tmp.fa', 'w') as f:
-            f.write('>test\n')
+            f.write('>{}\n'.format(str(obj.sample_uuid)))
             f.write(bigseq)
 
-        print('subprocess check')
-        sam_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -b -F 4 - | samtools sort - -O sam",shell=True).decode("utf-8").rstrip()
-        sams = []
+        print('Generate bam')
+        bam_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -bS -F 4 - | samtools sort - -o /dev/shm/seq/example.bam",shell=True)
 
-        with open('/dev/shm/seq/example.sam', 'w') as f:
-            f.write(sam_file)
-
-        #print('start')
-        #for i,line in enumerate(sam_file.split('\n')):
-        #    lst = line.split('\t')
-        #    if i > 4: # Skip headers, figure that out later
-        #        new_sam = {
-        #                "sample_uuid": sample_uuid,
-        #                "fastq_uuid": lst[0],
-        #                "alignment_tool": "minimap2",
-        #                "alignment_tool_version": "",
-        #                "flag": lst[1],
-        #                "pos": lst[3],
-        #                "mapq": lst[4],
-        #                "cigar": lst[5],
-        #                "rnext": lst[6],
-        #                "pnext": lst[7],
-        #                "tlen": lst[8],
-        #                }
-        #        for e in lst[11:]:
-        #            new_sam[e[0:2].lower()] = e
-        #        sams.append(new_sam)
-        #    if i %5000 == 0:
-        #        print('Working')
-        #session.bulk_insert_mappings(Sam, sams)
-        #session.commit()
+        with open("/dev/shm/seq/example.bam","rb") as f:
+            obj.bam=f.read()
+            session.commit()
         print('Upload complete for {}'.format(sample_uuid))
     seqrun.aligned = True
     session.commit()
