@@ -97,6 +97,7 @@ def seqrun_sam_generation(url,seqrun_uuid):
         bigseq = obj.full_seq
 
         # TODO: ONLY IMPORT UNIQUE INDEXS, THEN ALL SAMPLES WITH THOSE INDEXS
+        print('sql_query')
         sql_query = "SELECT fastqs.uuid,fastqs.sequence,fastqs.comments,fastqs.read_quality FROM fastqs WHERE fastqs.defined_index_for='{}' AND fastqs.defined_index_rev='{}' AND fastqs.seqrun_uuid='{}'"
         with engine.connect() as con:
             rs = con.execute(sql_query.format(index_for,index_rev,seqrun_uuid))
@@ -114,79 +115,41 @@ def seqrun_sam_generation(url,seqrun_uuid):
             f.write('>test\n')
             f.write(bigseq)
 
-        sam_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -h -F 4 - | samtools sort - -O sam",shell=True).decode("utf-8").rstrip().split('\n')
+        print('subprocess check')
+        sam_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -b -F 4 - | samtools sort - -O sam",shell=True).decode("utf-8").rstrip()
         sams = []
-        for i,line in enumerate(sam_file):
-            lst = line.split('\t')
-            if i > 4: # Skip headers, figure that out later
-                new_sam = {
-                        "sample_uuid": sample_uuid,
-                        "fastq_uuid": lst[0],
-                        "alignment_tool": "minimap2",
-                        "alignment_tool_version": "",
-                        "flag": lst[1],
-                        "pos": lst[3],
-                        "mapq": lst[4],
-                        "cigar": lst[5],
-                        "rnext": lst[6],
-                        "pnext": lst[7],
-                        "tlen": lst[8],
-                        }
-                for e in lst[11:]:
-                    new_sam[e[0:2]] = e
-                sams.append(new_sam)
-        session.bulk_insert_mappings(Sam, sams)
-        session.commit()
+
+        with open('/dev/shm/seq/example.sam', 'w') as f:
+            f.write(sam_file)
+
+        #print('start')
+        #for i,line in enumerate(sam_file.split('\n')):
+        #    lst = line.split('\t')
+        #    if i > 4: # Skip headers, figure that out later
+        #        new_sam = {
+        #                "sample_uuid": sample_uuid,
+        #                "fastq_uuid": lst[0],
+        #                "alignment_tool": "minimap2",
+        #                "alignment_tool_version": "",
+        #                "flag": lst[1],
+        #                "pos": lst[3],
+        #                "mapq": lst[4],
+        #                "cigar": lst[5],
+        #                "rnext": lst[6],
+        #                "pnext": lst[7],
+        #                "tlen": lst[8],
+        #                }
+        #        for e in lst[11:]:
+        #            new_sam[e[0:2].lower()] = e
+        #        sams.append(new_sam)
+        #    if i %5000 == 0:
+        #        print('Working')
+        #session.bulk_insert_mappings(Sam, sams)
+        #session.commit()
         print('Upload complete for {}'.format(sample_uuid))
     seqrun.aligned = True
     session.commit()
     return 'Completed without error'
 
 
-def sam_to_cls(url,sam_file):
-    engine = create_engine(url)
-    Base.metadata.create_all(engine)
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
-    #new_samfile = SamFile(seqrun_id=seqrun_id,bigseq=bigseq,alignment_tool='minimap2',alignment_tool_version='2.17-r943-dirty',index_for=index_for,index_rev=index_rev)
-    for i,line in enumerate(sam_file):
-        lst = line.split('\t')
-        
-
-        print(len(lst[11:]))
-
-
-
-
-def sequence(run_name:str,big_seq:str,reads:list,tmp_location='./.tmp'):
-    # Init by removing
-    try:
-        shutil.rmtree(tmp_location)
-    except OSError:
-        print('Failed to delete tmp')
-    else:
-        print('Deleted tmp')
-
-    # Add directory
-    try:
-        os.mkdir(tmp_location)
-    except OSError:
-        print('Failed to create tmp')
-    else:
-        print('Created tmp')
-
-    print(os.listdir('.'))
-
-    # Run alignment and write combined pileup file
-    pileup_loc = './.tmp/{}.pileup'.format(run_name)
-    with open('./.tmp/tmp.fasta', 'w') as the_file:
-        the_file.write('>tmp_fasta\n{}'.format(big_seq))
-    command = 'bwa index ./.tmp/tmp.fasta && bwa mem ./.tmp/tmp.fasta {} | samtools view -bS - | samtools sort - | samtools mpileup -f ./.tmp/tmp.fasta - > {}'.format(' '.join(reads), pileup_loc)
-    pileup_file = subprocess.check_output(command,shell=True)
-
-    # Read pileup file into pandas
-    combined_pileup = pd.read_table('{}'.format(pileup_loc), names = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"])
-    combined_pileup = combined_pileup.set_index('Position')
-    return combined_pileup
 

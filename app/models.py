@@ -1,4 +1,6 @@
 import gzip
+
+
 from sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy
 #from sqlalchemy import Column, db.ForeignKey, db.Integer, db.String,db.DateTime
@@ -94,48 +96,50 @@ class Sample(db.Model):
     search_seq = db.Column(db.String)
     full_seq = db.Column(db.String)
 
+    bam = db.Column(db.LargeBinary)
+
     def toJSON(self,full=None):
         return {'uuid':self.uuid,'sample_uuid':self.sample_uuid,'seqrun_uuid':self.seqrun_uuid,'index_for':self.index_for,'index_rev':self.index_rev,'search_seq':self.search_seq,'full_seq':self.full_seq}
 
 
 
-class Sam(db.Model):
-    __tablename__ = 'sams'
-    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
-    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
-
-    sample_uuid = db.Column(UUID, db.ForeignKey('samples.uuid'), nullable=False)
-    fastq_uuid = db.Column(UUID,db.ForeignKey('fastqs.uuid'),nullable=False)
-    alignment_tool = db.Column(db.String)
-    alignment_tool_version = db.Column(db.String)
-
-    # https://en.wikipedia.org/wiki/SAM_(file_format)
-    # https://samtools.github.io/hts-specs/SAMv1.pdf
-    flag = db.Column(db.Integer)
-    pos = db.Column(db.Integer)
-    mapq = db.Column(db.Integer)
-    cigar = db.Column(db.String)
-    rnext = db.Column(db.String)
-    pnext = db.Column(db.Integer)
-    tlen = db.Column(db.Integer)
-
-    # In spec
-    tp = db.Column(db.String)
-    cm = db.Column(db.String)
-    s1 = db.Column(db.String)
-    s2 = db.Column(db.String)
-    NM = db.Column(db.String)
-    MD = db.Column(db.String)
-    AS = db.Column(db.String)
-    ms = db.Column(db.String)
-    nn = db.Column(db.String)
-    ts = db.Column(db.String)
-    cg = db.Column(db.String)
-    cs = db.Column(db.String)
-    dv = db.Column(db.String)
-    de = db.Column(db.String)
-    rl = db.Column(db.String)
-    SA = db.Column(db.String)
+#class Sam(db.Model):
+#    __tablename__ = 'sams'
+#    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False,default=sqlalchemy.text("uuid_generate_v4()"), primary_key=True)
+#    time_created = db.Column(db.DateTime(timezone=True), server_default=func.now())
+#
+#    sample_uuid = db.Column(UUID, db.ForeignKey('samples.uuid'), nullable=False)
+#    fastq_uuid = db.Column(UUID,db.ForeignKey('fastqs.uuid'),nullable=False)
+#    alignment_tool = db.Column(db.String)
+#    alignment_tool_version = db.Column(db.String)
+#
+#    # https://en.wikipedia.org/wiki/SAM_(file_format)
+#    # https://samtools.github.io/hts-specs/SAMv1.pdf
+#    flag = db.Column(db.Integer)
+#    pos = db.Column(db.Integer)
+#    mapq = db.Column(db.Integer)
+#    cigar = db.Column(db.String)
+#    rnext = db.Column(db.String)
+#    pnext = db.Column(db.Integer)
+#    tlen = db.Column(db.Integer)
+#
+#    # In spec
+#    tp = db.Column(db.String)
+#    cm = db.Column(db.String)
+#    s1 = db.Column(db.String)
+#    s2 = db.Column(db.String)
+#    nm = db.Column(db.String)
+#    md = db.Column(db.String)
+#    AS = db.Column('as',db.String)
+#    ms = db.Column(db.String)
+#    nn = db.Column(db.String)
+#    ts = db.Column(db.String)
+#    cg = db.Column(db.String)
+#    cs = db.Column(db.String)
+#    dv = db.Column(db.String)
+#    de = db.Column(db.String)
+#    rl = db.Column(db.String)
+#    sa = db.Column(db.String)
 
 seqrun_schema = {
         "name": generic_string,
