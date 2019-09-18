@@ -4,7 +4,7 @@ MAINTAINER Keoni Gandall "koeng101@gmail.com"
 
 # Update
 RUN apt-get update 
-RUN apt-get install -y build-essential libssl-dev libffi-dev python3-dev apt-transport-https python3-pip curl samtools
+RUN apt-get install -y build-essential libssl-dev libffi-dev python3-dev apt-transport-https python3-pip curl samtools libbz2-dev
 
 # Install requirements
 COPY . /app
