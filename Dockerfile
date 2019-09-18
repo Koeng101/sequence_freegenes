@@ -9,6 +9,8 @@ RUN apt-get install -y build-essential libssl-dev libffi-dev python3-dev apt-tra
 # Install requirements
 COPY . /app
 WORKDIR /app
+RUN pip3 install --upgrade pip3
+
 RUN pip3 install -r requirements.txt
 
 # Install minimap2
