@@ -55,10 +55,10 @@ class GetPileup(Resource):
             f.write(obj.full_seq)
         with open('{}/bam_tmp.bam'.format(PATH),'wb') as f:
             f.write(obj.bam)
-        sam_file = subprocess.check_output("samtools mpileup -f {}/bam_tmp.fa {}/bam_tmp.bam -o {}/pileup_out.pileup",shell=True).decode("utf-8").rstrip()#.split('\n') 
-        pileup = pandas.read_csv('{}/pileup_out.pileup',sep='\t', names = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"])
+        sam_file = subprocess.check_output("samtools mpileup -f {}/bam_tmp.fa {}/bam_tmp.bam -o {}/pileup_out.pileup".format(PATH,PATH,PATH),shell=True).decode("utf-8").rstrip()#.split('\n') 
+        pileup = pandas.read_csv('{}/pileup_out.pileup'.format(PATH),sep='\t', names = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"])
         pileup = pileup.set_index('Position')
-        os.remove("{}/bam_tmp.fa.fai")
+        os.remove("{}/bam_tmp.fa.fai".format(PATH))
 
 
         length = len(obj.search_seq)
