@@ -90,18 +90,19 @@ def seqrun_bam_generation(url,seqrun_uuid):
     seqrun = session.query(SeqRun).filter_by(uuid=seqrun_uuid).first() 
 
     # Get samples
+    d = {}
     for obj in seqrun.samples:
-        sample_uuid = str(obj.uuid)
-        index_for = obj.index_for
-        index_rev = obj.index_rev
-        bigseq = obj.full_seq
+        d.setdefault(obj.index_for + obj.index_rev, []).append(obj)
+
+    for k,v in d.items():
 
         # TODO: ONLY IMPORT UNIQUE INDEXS, THEN ALL SAMPLES WITH THOSE INDEXS
-        print('sql_query')
+        print('Execute SQL on {}'.format(k))
         sql_query = "SELECT fastqs.uuid,fastqs.sequence,fastqs.comments,fastqs.read_quality FROM fastqs WHERE fastqs.defined_index_for='{}' AND fastqs.defined_index_rev='{}' AND fastqs.seqrun_uuid='{}'"
         with engine.connect() as con:
-            rs = con.execute(sql_query.format(index_for,index_rev,seqrun_uuid))
-    
+            rs = con.execute(sql_query.format(k[0:8],k[8:],seqrun_uuid))
+            
+            print('Write Fastq')
             with open('/dev/shm/seq/tmp.fastq', 'w') as f:
                 for row in rs:
                     for i,r in enumerate(row):
@@ -109,19 +110,20 @@ def seqrun_bam_generation(url,seqrun_uuid):
                             f.write("@{}".format(str(r)) + '\n')
                         else:
                             f.write(r + '\n')
-    
 
-        with open('/dev/shm/seq/tmp.fa', 'w') as f:
-            f.write('>{}\n'.format(str(obj.sample_uuid)))
-            f.write(bigseq)
+        for obj in v:
+            with open('/dev/shm/seq/tmp.fa', 'w') as f:
+                f.write('>{}\n'.format(str(obj.sample_uuid)))
+                f.write(obj.full_seq)
 
-        print('Generate bam')
-        bam_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -bS -F 4 - | samtools sort - -o /dev/shm/seq/example.bam",shell=True)
+            print('Generate bam')
+            bam_file = subprocess.check_output("minimap2 -a --cs /dev/shm/seq/tmp.fa /dev/shm/seq/tmp.fastq | samtools view -bS -F 4 - | samtools sort - -o /dev/shm/seq/example.bam",shell=True)
 
-        with open("/dev/shm/seq/example.bam","rb") as f:
-            obj.bam=f.read()
-            session.commit()
-        print('Upload complete for {}'.format(sample_uuid))
+            print('Bam into database')
+            with open("/dev/shm/seq/example.bam","rb") as f:
+                obj.bam=f.read()
+                session.commit()
+            print('Upload complete for {}'.format(obj.sample_uuid))
     seqrun.aligned = True
     session.commit()
     return 'Completed without error'

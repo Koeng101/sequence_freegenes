@@ -1,9 +1,9 @@
 from kg_flask_crud import create_crud,requires_auth
+import os
 import pysam
 from .models import *
 import pandas
 import subprocess
-
 
 from .jobs import fasta_to_db, seqrun_bam_generation 
 from .config import *
@@ -45,10 +45,9 @@ class GenerateSam(Resource):
         new_sam.start()
         return jsonify({'message':'Processing started'})
 
-@ns_sample.route('/get_bam/<uuid>')
+@ns_sample.route('/get_pileup/<uuid>')
 class GetSam(Resource):
-    @ns_sample.doc('get_bam',security='token')
-    @requires_auth(['moderator','admin'])
+    @ns_sample.doc('get_pileup',security='token')
     def get(self,uuid):
         obj = Sample.query.filter_by(uuid=uuid).first()
 
@@ -57,11 +56,20 @@ class GetSam(Resource):
             f.write(obj.full_seq)
         with open('/dev/shm/seq/bam_tmp.bam','wb') as f:
             f.write(obj.bam)
-        sam_file = subprocess.check_output(" samtools mpileup -f /dev/shm/seq/bam_tmp.fa /dev/shm/seq/bam_tmp.bam -o /dev/shm/seq/pileup_out.pileup",shell=True).decode("utf-8").rstrip()#.split('\n') 
-        pileup = pandas.read_csv('/dev/shm/seq/pileup_out.pileup',sep='\t')
+        sam_file = subprocess.check_output("samtools mpileup -f /dev/shm/seq/bam_tmp.fa /dev/shm/seq/bam_tmp.bam -o /dev/shm/seq/pileup_out.pileup",shell=True).decode("utf-8").rstrip()#.split('\n') 
+        pileup = pandas.read_csv('/dev/shm/seq/pileup_out.pileup',sep='\t', names = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"])
+        os.remove("/dev/shm/seq/bam_tmp.fa.fai")
+
+        length = len(obj.search_seq)
+        start = obj.full_seq.find(obj.search_seq)
+        indexs = start, start+length-1
+        gene_df = pileup.loc[indexs[0]:indexs[1]]
+        gene_df.loc[:,'Sequence'] = obj.sample_uuid
+        gene_df = gene_df.reset_index(drop=True)
+
 
         # Format pileup file properly
-        resp = make_response(pileup.to_csv(sep='\t',index=False))
+        resp = make_response(gene_df.to_csv(sep='\t',index=False))
         resp.headers["Content-Disposition"] = "attachment; filename={}.pileup".format(obj.sample_uuid)
         resp.headers["Content-Type"] = "text/csv"
         return resp
