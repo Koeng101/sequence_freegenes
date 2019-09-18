@@ -58,18 +58,21 @@ class GetSam(Resource):
             f.write(obj.bam)
         sam_file = subprocess.check_output("samtools mpileup -f /dev/shm/seq/bam_tmp.fa /dev/shm/seq/bam_tmp.bam -o /dev/shm/seq/pileup_out.pileup",shell=True).decode("utf-8").rstrip()#.split('\n') 
         pileup = pandas.read_csv('/dev/shm/seq/pileup_out.pileup',sep='\t', names = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"])
+        pileup = pileup.set_index('Position')
         os.remove("/dev/shm/seq/bam_tmp.fa.fai")
+
 
         length = len(obj.search_seq)
         start = obj.full_seq.find(obj.search_seq)
-        indexs = start, start+length-1
+        indexs = start+1, start+length
         gene_df = pileup.loc[indexs[0]:indexs[1]]
         gene_df.loc[:,'Sequence'] = obj.sample_uuid
         gene_df = gene_df.reset_index(drop=True)
-
+        gene_df.index += 1 
+        gene_df['Position'] = gene_df.index
 
         # Format pileup file properly
-        resp = make_response(gene_df.to_csv(sep='\t',index=False))
+        resp = make_response(gene_df.to_csv(sep='\t',index=False,columns = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"]))
         resp.headers["Content-Disposition"] = "attachment; filename={}.pileup".format(obj.sample_uuid)
         resp.headers["Content-Type"] = "text/csv"
         return resp
