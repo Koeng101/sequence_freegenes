@@ -46,20 +46,20 @@ class GenerateSam(Resource):
         return jsonify({'message':'Processing started'})
 
 @ns_sample.route('/get_pileup/<uuid>')
-class GetSam(Resource):
+class GetPileup(Resource):
     @ns_sample.doc('get_pileup',security='token')
     def get(self,uuid):
         obj = Sample.query.filter_by(uuid=uuid).first()
 
-        with open('/dev/shm/seq/bam_tmp.fa', 'w') as f:
+        with open('{}/bam_tmp.fa'.format(PATH), 'w') as f:
             f.write('>{}\n'.format(obj.sample_uuid))
             f.write(obj.full_seq)
-        with open('/dev/shm/seq/bam_tmp.bam','wb') as f:
+        with open('{}/bam_tmp.bam'.format(PATH),'wb') as f:
             f.write(obj.bam)
-        sam_file = subprocess.check_output("samtools mpileup -f /dev/shm/seq/bam_tmp.fa /dev/shm/seq/bam_tmp.bam -o /dev/shm/seq/pileup_out.pileup",shell=True).decode("utf-8").rstrip()#.split('\n') 
-        pileup = pandas.read_csv('/dev/shm/seq/pileup_out.pileup',sep='\t', names = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"])
+        sam_file = subprocess.check_output("samtools mpileup -f {}/bam_tmp.fa {}/bam_tmp.bam -o {}/pileup_out.pileup",shell=True).decode("utf-8").rstrip()#.split('\n') 
+        pileup = pandas.read_csv('{}/pileup_out.pileup',sep='\t', names = ["Sequence", "Position", "Reference Base", "Read Count", "Read Results", "Quality"])
         pileup = pileup.set_index('Position')
-        os.remove("/dev/shm/seq/bam_tmp.fa.fai")
+        os.remove("{}/bam_tmp.fa.fai")
 
 
         length = len(obj.search_seq)
