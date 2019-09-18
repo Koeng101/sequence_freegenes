@@ -1,6 +1,5 @@
 from kg_flask_crud import create_crud,requires_auth
 import os
-import pysam
 from .models import *
 import pandas
 import subprocess
